@@ -1,19 +1,20 @@
 // Duo Admin API request signatures
 // https://duo.com/docs/adminapi
+// v20180131.1
+//
 // context docs: https://paw.cloud/docs/reference/ExtensionContext
 // request docs: https://paw.cloud/docs/reference/Request
 //
 // Setup in Paw environment:
-// IKEY - (integration key)
-// SKEY - (secret key)
-// HOST - (api hostname)
+// IKEY - duo integration key
+// SKEY - duo secret key
+// HOST - duo api hostname
+// TZ - timezone (in 4-digit format: +0000 for example)
 //
 // In each request, select Auth -> Basic Auth, then set the username to IKEY and paste
 // this JS code in as the password.
-//
-// TODO: fix hardcoded timezone!
 
-function formatDate(date) {
+function formatDate(date, tz) {
     var dayofweek = "";
     switch (date.getUTCDay()) {
         case 0:
@@ -79,7 +80,7 @@ function formatDate(date) {
     }
     var day = date.getUTCDate();
     //Tue, 21 Aug 2012 17:29:18 -0000
-    return dayofweek + ", " + pad(day) + " " + month + " " + date.getFullYear() + " " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds()) + " -0700";
+    return dayofweek + ", " + pad(day) + " " + month + " " + date.getFullYear() + " " + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds()) + " " + tz;
 }
 
 function pad(number) {
@@ -133,9 +134,10 @@ function signHmacSha1(key, input) {
 function evaluate(context){
     var SKEY = context.getEnvironmentVariableByName('SKEY').getCurrentValue();
     var HOST = context.getEnvironmentVariableByName('HOST').getCurrentValue();
+    var TZ = context.getEnvironmentVariableByName('TZ').getCurrentValue();
     var DATE = new Date();
     var request = context.getCurrentRequest();
-    var canon = formatDate(DATE) + "\n" + request.getMethod() + "\n" + HOST + "\n" + getUrlPath(request.getUrlBase(), HOST) + "\n" + encodeParams(request);
+    var canon = formatDate(DATE, TZ) + "\n" + request.getMethod() + "\n" + HOST + "\n" + getUrlPath(request.getUrlBase(), HOST) + "\n" + encodeParams(request);
     //return canon;
     return signHmacSha1(SKEY, canon);
 };
